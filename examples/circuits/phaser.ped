@@ -1,0 +1,56 @@
+# Phaser Effect with LFO Modulation
+# Classic 4-stage all-pass phaser with sweeping notches
+# The LFO modulates resistors in the all-pass filters to sweep the notches
+
+.input in
+.output out
+
+V_IN in 0 DC 0
+
+# LFO for modulation - 0.5 Hz sine wave
+# Syntax: LFO name rate shape
+LFO LFO1 0.5 sine
+
+# Input buffer
+R_IN in buf 1k
+R_BUF buf 0 47k
+
+# All-pass stage 1 (fc ~ 200-800 Hz, swept by LFO)
+# R_AP1 is modulated: base 10k, varies by depth*range when LFO sweeps
+R_AP1 buf ap1m 10k LFO1 depth=0.9 range=3.0
+C_AP1 ap1m 0 47n
+R_AP1F buf inv1 10k
+OP1 ap1out ap1m inv1 OPAMP
+R_AP1B inv1 ap1out 10k
+
+# All-pass stage 2 (fc ~ 400-1600 Hz, swept by LFO)
+R_AP2 ap1out ap2m 10k LFO1 depth=0.9 range=3.0
+C_AP2 ap2m 0 22n
+R_AP2F ap1out inv2 10k
+OP2 ap2out ap2m inv2 OPAMP
+R_AP2B inv2 ap2out 10k
+
+# All-pass stage 3 (fc ~ 800-3200 Hz, swept by LFO)
+R_AP3 ap2out ap3m 10k LFO1 depth=0.9 range=3.0
+C_AP3 ap3m 0 10n
+R_AP3F ap2out inv3 10k
+OP3 ap3out ap3m inv3 OPAMP
+R_AP3B inv3 ap3out 10k
+
+# All-pass stage 4 (fc ~ 1500-6000 Hz, swept by LFO)
+R_AP4 ap3out ap4m 10k LFO1 depth=0.9 range=3.0
+C_AP4 ap4m 0 4.7n
+R_AP4F ap3out inv4 10k
+OP4 ap4out ap4m inv4 OPAMP
+R_AP4B inv4 ap4out 10k
+
+# Mix dry and wet signals equally (creates moving notches)
+R_DRY buf mix 10k
+R_WET ap4out mix 10k
+
+# Output buffer
+R_MIX mix inv_out 10k
+OP_OUT out 0 inv_out OPAMP
+R_FB inv_out out 10k
+
+R_LOAD out 0 10k

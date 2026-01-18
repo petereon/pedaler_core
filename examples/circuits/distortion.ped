@@ -1,0 +1,40 @@
+# Tube Screamer Style Distortion
+# High-gain op-amp stage with asymmetric diode clipping
+# Classic overdrive tone with mid-hump character
+
+.input in
+.output out
+
+# Power supply rails (virtual)
+V_IN in 0 DC 0
+
+# Input coupling and impedance
+C_IN in n1 1u
+R_IN n1 0 10k
+
+# First gain stage - clean boost
+R_G1 n1 inv1 4.7k
+OP1 amp1 0 inv1 OPAMP
+R_FB1 inv1 amp1 47k
+C_FB1 inv1 amp1 47p
+
+# Second stage - main distortion with diode clipping
+R_G2 amp1 inv2 10k
+OP2 amp2 0 inv2 OPAMP
+
+# Feedback network with clipping diodes
+R_FB2 inv2 amp2 100k
+
+# Asymmetric clipping - two diodes one way, one the other
+# Creates even harmonics for "warm" distortion
+D1 inv2 amp2 DIODE
+D2 inv2 amp2 DIODE
+D3 amp2 inv2 DIODE
+
+# Tone shaping - mid-boost character
+R_TONE1 amp2 tone1 4.7k
+C_TONE tone1 0 22n
+R_TONE2 tone1 out 10k
+
+# Output load
+R_OUT out 0 10k

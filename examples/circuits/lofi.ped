@@ -1,0 +1,36 @@
+# Lo-Fi / Telephone Effect
+# Aggressive bandpass filtering removes lows and highs
+# Creates that "old radio" or "telephone" sound
+
+.input in
+.output out
+
+V_IN in 0 DC 0
+
+# Input stage
+C_IN in n1 100n
+R_IN n1 0 47k
+
+# High-pass filter - removes bass (cutoff ~300Hz)
+C_HP1 n1 hp1 100n
+R_HP1 hp1 0 4.7k
+C_HP2 hp1 hp2 100n
+R_HP2 hp2 0 4.7k
+
+# Gain stage
+R_G1 hp2 inv1 4.7k
+OP1 amp1 0 inv1 OPAMP
+R_FB1 inv1 amp1 47k
+
+# Low-pass filter - removes treble (cutoff ~3kHz)
+R_LP1 amp1 lp1 4.7k
+C_LP1 lp1 0 10n
+R_LP2 lp1 lp2 4.7k
+C_LP2 lp2 0 10n
+
+# Output gain stage
+R_G2 lp2 inv2 10k
+OP2 out 0 inv2 OPAMP
+R_FB2 inv2 out 22k
+
+R_LOAD out 0 10k

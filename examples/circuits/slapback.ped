@@ -1,0 +1,18 @@
+# Slapback Echo
+# Short delay for rockabilly/country sound
+
+.input in
+.output amp
+
+V_IN in 0 DC 0
+
+# Light gain stage
+R_IN in inv 10k
+OP1 amp 0 inv OPAMP
+R_FB inv amp 15k
+
+R_LOAD amp 0 10k
+
+# Short slapback delay - 120ms
+# mix=0.4 (more dry than wet), feedback=0.2 (single slap, minimal repeat)
+DELAY d1 amp amp 120m mix=0.4 feedback=0.2

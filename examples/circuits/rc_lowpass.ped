@@ -1,0 +1,22 @@
+# RC Low-Pass Filter
+# ===================
+# A simple first-order RC low-pass filter.
+# This is a purely linear circuit - no nonlinear components.
+#
+# Cutoff frequency: fc = 1 / (2 * pi * R * C)
+# With R = 10k and C = 10n: fc ≈ 1.59 kHz
+#
+# This is useful as a tone control or high-frequency roll-off.
+
+# Input voltage source - driven by audio samples
+V_IN    in      0       AC
+
+# Input resistor
+R1      in      out     10k
+
+# Filter capacitor to ground
+C1      out     0       10n
+
+# Define input and output nodes
+.input  in
+.output out

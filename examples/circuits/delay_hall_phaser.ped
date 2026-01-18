@@ -1,0 +1,61 @@
+# Delay -> Hall Reverb -> Phaser Chain
+# A lush ambient effects chain with modulated phaser at the end
+
+.input in
+.output out
+
+V_IN in 0 DC 0
+
+# Input buffer - high impedance to minimize loading
+R_IN in buf1 1k
+R_BUF1 buf1 0 100k
+
+# ===== DELAY SECTION =====
+# Slapback delay (150ms) with moderate feedback for rhythmic echoes
+DELAY d1 buf1 post_delay 150m mix=0.7 feedback=0.35
+
+# ===== HALL REVERB SECTION =====
+# Large hall reverb for spacious ambience
+REVERB rev1 post_delay post_reverb size=0.85 decay=0.7 damping=0.4 mix=0.6 predelay=25m
+
+# ===== PHASER SECTION =====
+# 4-stage all-pass phaser with slow LFO sweep using op-amps for unity gain
+
+# LFO for phaser modulation - slow sweep for underwater effect
+LFO LFO1 0.3 sine
+
+# All-pass stage 1 (fc ~ 100-400 Hz)
+R_AP1 post_reverb ap1m 10k LFO1 depth=0.8 range=2.5
+C_AP1 ap1m 0 100n
+R_AP1F post_reverb inv1 10k
+OP1 ap1out ap1m inv1 OPAMP
+R_AP1B inv1 ap1out 10k
+
+# All-pass stage 2 (fc ~ 200-800 Hz)
+R_AP2 ap1out ap2m 10k LFO1 depth=0.8 range=2.5
+C_AP2 ap2m 0 47n
+R_AP2F ap1out inv2 10k
+OP2 ap2out ap2m inv2 OPAMP
+R_AP2B inv2 ap2out 10k
+
+# All-pass stage 3 (fc ~ 400-1600 Hz)
+R_AP3 ap2out ap3m 10k LFO1 depth=0.8 range=2.5
+C_AP3 ap3m 0 22n
+R_AP3F ap2out inv3 10k
+OP3 ap3out ap3m inv3 OPAMP
+R_AP3B inv3 ap3out 10k
+
+# All-pass stage 4 (fc ~ 800-3200 Hz)
+R_AP4 ap3out ap4m 10k LFO1 depth=0.8 range=2.5
+C_AP4 ap4m 0 10n
+R_AP4F ap3out inv4 10k
+OP4 ap4out ap4m inv4 OPAMP
+R_AP4B inv4 ap4out 10k
+
+# Mix dry and wet signals (creates moving notches)
+R_DRY post_reverb mix 10k
+R_WET ap4out mix 10k
+
+# Output buffer
+R_OUT mix out 1k
+R_LOAD out 0 100k

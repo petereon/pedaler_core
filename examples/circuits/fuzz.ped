@@ -1,0 +1,43 @@
+# Fuzz - Extreme Clipping Distortion
+# High gain into hard clipping creates square wave-like output
+# Classic 60s/70s fuzz tone
+
+.input in
+.output out
+
+V_IN in 0 DC 0
+
+# Input coupling
+C_IN in n1 470n
+R_IN n1 0 100k
+
+# First gain stage - massive gain
+R_G1 n1 inv1 1k
+OP1 amp1 0 inv1 OPAMP
+R_FB1 inv1 amp1 470k
+
+# Hard clipping diodes after first stage
+D1A amp1 clip1 DIODE
+D1B clip1 amp1 DIODE
+R_CLP1 clip1 0 10k
+
+# Second gain stage - more gain!
+R_G2 clip1 inv2 4.7k
+OP2 amp2 0 inv2 OPAMP
+R_FB2 inv2 amp2 100k
+
+# More hard clipping
+D2A amp2 clip2 DIODE
+D2B clip2 amp2 DIODE
+R_CLP2 clip2 0 10k
+
+# Tone control - roll off harsh highs
+R_TONE clip2 tone 10k
+C_TONE tone 0 4.7n
+
+# Output stage
+R_OUT1 tone inv3 10k
+OP3 out 0 inv3 OPAMP
+R_OUT2 inv3 out 22k
+
+R_LOAD out 0 10k

@@ -1,0 +1,46 @@
+# Op-Amp Overdrive (High Gain)
+# =============================
+# An overdrive with high gain and soft clipping in the feedback loop.
+#
+# This circuit uses an inverting amplifier with a gain of -50.
+# Diodes in the feedback path limit the gain at high signal levels,
+# creating soft, asymmetric clipping characteristic of tube amps.
+#
+# At low input levels: Gain ≈ -50 (linear)
+# At high input levels: Diodes conduct, limiting output to ~±0.6V
+#
+# Signal flow:
+#   IN -> High Gain Inverting Amp with Diode Limiting -> OUT
+
+# Input voltage source - driven by audio samples
+V_IN    in      0       AC
+
+# === INPUT STAGE ===
+# Input resistor sets gain denominator
+R_IN    in      n_inv   1k
+
+# === OP-AMP WITH FEEDBACK CLIPPING ===
+# Inverting amplifier
+# Op-amp nodes: OUT, IN+, IN-
+# IN+ = ground (0), IN- = n_inv, OUT = out
+OP1     out     0       n_inv   OPAMP
+
+# Feedback resistor: Gain = -R_FB/R_IN = -50k/1k = -50
+R_FB    n_inv   out     50k
+
+# Soft clipping diodes in parallel with feedback resistor
+# These limit gain when output exceeds ~0.6V
+D1      n_inv   out     DCLIP
+D2      out     n_inv   DCLIP
+
+# Load resistor
+R_LOAD  out     0       10k
+
+# Model definitions
+# Diode with higher Is for strong clipping effect
+.model DCLIP D (vf=0.5 is=1e-9 n=1.5)
+.model OPAMP OP (gain=100000 rin=1M rout=100)
+
+# Define input and output nodes
+.input  in
+.output out

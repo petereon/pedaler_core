@@ -1,0 +1,33 @@
+# Treble Booster
+# Classic rangemaster-style treble boost
+# Boosts highs while keeping lows cleaner
+
+.input in
+.output out
+
+V_IN in 0 DC 0
+
+# Input with high-pass to cut bass
+C_IN in hp1 4.7n
+R_HP hp1 0 68k
+
+# First boost stage - emphasizes treble
+R_G1 hp1 inv1 10k
+OP1 amp1 0 inv1 OPAMP
+R_FB1 inv1 amp1 100k
+C_FB1 inv1 amp1 100p
+
+# Second stage with frequency-dependent feedback
+R_G2 amp1 inv2 4.7k
+OP2 amp2 0 inv2 OPAMP
+R_FB2 inv2 amp2 47k
+C_FB2 inv2 fb2 1n
+R_FB2B fb2 amp2 10k
+
+# Light clipping for sparkle
+D1 inv2 amp2 DIODE
+D2 amp2 inv2 DIODE
+
+# Output
+R_OUT amp2 out 1k
+R_LOAD out 0 10k

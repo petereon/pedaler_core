@@ -1,0 +1,72 @@
+# Flanger Effect with LFO Modulation
+# Creates the classic "jet plane" swooshing sound
+# Uses cascaded all-pass filters with LFO modulation
+# (Similar topology to phaser but tuned for flanger-like comb filtering)
+
+.input in
+.output out
+
+V_IN in 0 DC 0
+
+# LFO for modulation - 0.3 Hz triangle wave for smooth sweep
+LFO LFO1 0.3 triangle
+
+# Input buffer with slight gain
+R_IN in buf 1k
+R_BUF buf 0 47k
+
+# All-pass stage 1 (low frequency, creates deep comb effect)
+R_AP1 buf ap1m 15k LFO1 depth=0.95 range=4.0
+C_AP1 ap1m 0 100n
+R_AP1F buf inv1 15k
+OP1 ap1out ap1m inv1 OPAMP
+R_AP1B inv1 ap1out 15k
+
+# All-pass stage 2
+R_AP2 ap1out ap2m 15k LFO1 depth=0.95 range=4.0
+C_AP2 ap2m 0 68n
+R_AP2F ap1out inv2 15k
+OP2 ap2out ap2m inv2 OPAMP
+R_AP2B inv2 ap2out 15k
+
+# All-pass stage 3
+R_AP3 ap2out ap3m 15k LFO1 depth=0.95 range=4.0
+C_AP3 ap3m 0 47n
+R_AP3F ap2out inv3 15k
+OP3 ap3out ap3m inv3 OPAMP
+R_AP3B inv3 ap3out 15k
+
+# All-pass stage 4
+R_AP4 ap3out ap4m 15k LFO1 depth=0.95 range=4.0
+C_AP4 ap4m 0 33n
+R_AP4F ap3out inv4 15k
+OP4 ap4out ap4m inv4 OPAMP
+R_AP4B inv4 ap4out 15k
+
+# All-pass stage 5 (extra stages for denser comb filtering)
+R_AP5 ap4out ap5m 15k LFO1 depth=0.95 range=4.0
+C_AP5 ap5m 0 22n
+R_AP5F ap4out inv5 15k
+OP5 ap5out ap5m inv5 OPAMP
+R_AP5B inv5 ap5out 15k
+
+# All-pass stage 6
+R_AP6 ap5out ap6m 15k LFO1 depth=0.95 range=4.0
+C_AP6 ap6m 0 15n
+R_AP6F ap5out inv6 15k
+OP6 ap6out ap6m inv6 OPAMP
+R_AP6B inv6 ap6out 15k
+
+# Feedback path for resonance (creates the metallic flanger character)
+R_REGEN ap6out buf 47k
+
+# Mix dry and wet - slightly more wet for pronounced effect
+R_DRY buf mix 12k
+R_WET ap6out mix 10k
+
+# Output buffer
+R_MIX mix inv_out 10k
+OP_OUT out 0 inv_out OPAMP
+R_FB inv_out out 10k
+
+R_LOAD out 0 10k

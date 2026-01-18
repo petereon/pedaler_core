@@ -1,0 +1,49 @@
+[package]
+name = "pedaler_core"
+version = "0.1.0"
+edition = "2021"
+authors = ["Pedaler Contributors"]
+description = "Real-time circuit simulator for guitar pedals"
+license = "MIT"
+repository = "https://github.com/pedaler/pedaler_core"
+keywords = ["audio", "dsp", "circuit-simulation", "guitar", "effects"]
+categories = ["multimedia::audio", "simulation"]
+
+[lib]
+name = "pedaler_core"
+path = "src/lib.rs"
+crate-type = ["cdylib", "rlib"]
+
+[[bin]]
+name = "pedaler"
+path = "src/main.rs"
+required-features = ["cli"]
+
+[features]
+default = ["cli"]
+cli = ["clap"]
+wasm = ["wasm-bindgen", "console_error_panic_hook"]
+
+[dependencies]
+# Error handling
+thiserror = "1.0"
+
+# CLI argument parsing (optional, CLI only)
+clap = { version = "4.4", features = ["derive"], optional = true }
+
+# WASM bindings (optional, WASM only)
+wasm-bindgen = { version = "0.2", optional = true }
+console_error_panic_hook = { version = "0.1", optional = true }
+
+[dev-dependencies]
+# Testing utilities
+approx = "0.5"
+
+[profile.release]
+opt-level = 3
+lto = true
+codegen-units = 1
+
+[profile.release-wasm]
+inherits = "release"
+opt-level = "s"  # Optimize for size in WASM

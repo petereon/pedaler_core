@@ -1,0 +1,14 @@
+# FDN Reverb Effect
+# Natural-sounding algorithmic reverb
+
+.input in
+.output buf
+
+V_IN in 0 AC
+
+# Simple buffer
+R_IN in buf 1k
+R_LOAD buf 0 10k
+
+# FDN Reverb with medium decay and size (post-processing)
+REVERB rv1 buf buf decay=0.6 size=0.5 damping=0.3 mix=0.4

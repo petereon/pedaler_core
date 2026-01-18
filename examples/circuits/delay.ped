@@ -1,0 +1,15 @@
+# Simple Delay Effect
+# 300ms echo with mixing for audible echo
+
+.input in
+.output buf
+
+V_IN in 0 DC 0
+
+# Simple buffer (unity gain)
+R_IN in buf 1k
+R_LOAD buf 0 10k
+
+# Digital delay effect - 300ms
+# mix=0.5 (50% dry, 50% wet), feedback=0.4 (repeating echoes)
+DELAY d1 buf buf 300m mix=0.5 feedback=0.4

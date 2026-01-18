@@ -1,0 +1,13 @@
+# Large Hall Reverb
+# Long decay, large room simulation
+
+.input in
+.output buf
+
+V_IN in 0 DC 0
+
+R_IN in buf 1k
+R_LOAD buf 0 10k
+
+# Large hall settings - long decay, big size, moderate damping (post-processing)
+REVERB rv1 buf buf decay=0.8 size=0.9 damping=0.25 mix=0.5 predelay=30m

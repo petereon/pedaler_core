@@ -1,0 +1,6 @@
+/target
+vibe/
+*.wav
+!examples/master_of_puppets_no_effect.wav
+examples/*.rs
+.DS_store

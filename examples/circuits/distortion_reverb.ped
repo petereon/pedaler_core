@@ -1,0 +1,25 @@
+# Distortion with Reverb
+# Classic distortion followed by lush reverb
+
+.input in
+.output buf
+
+V_IN in 0 DC 0
+
+# Input coupling
+C_IN in n1 1u
+R_IN n1 0 10k
+
+# Distortion stage
+R_G1 n1 inv1 4.7k
+OP1 amp1 0 inv1 OPAMP
+R_FB1 inv1 amp1 47k
+D1 inv1 amp1 DIODE
+D2 amp1 inv1 DIODE
+
+# Output buffer
+R_OUT amp1 buf 1k
+R_LOAD buf 0 10k
+
+# Add reverb after distortion (post-processing)
+REVERB rv1 buf buf decay=0.5 size=0.4 damping=0.4 mix=0.35

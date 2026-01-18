@@ -1,0 +1,49 @@
+# Diode Hard Clipper with Gain Stage
+# ====================================
+# A hard clipper with pre-amplification for audible distortion.
+#
+# The op-amp provides 20x gain to drive the diodes into hard clipping.
+# Anti-parallel diodes then clip the amplified signal.
+#
+# Signal flow:
+#   IN -> 20x Gain Amp -> Diode Clipper -> OUT
+#
+# Expected behavior:
+# - Small signals: amplified ~20x, minimal clipping
+# - Medium signals: heavy clipping, squared waveform
+# - Output limited to approximately ±0.6V
+
+# Input voltage source - driven by audio samples
+V_IN    in      0       AC
+
+# === GAIN STAGE (Op-amp with gain of 20) ===
+# Non-inverting amplifier: Gain = 1 + R_FB/R_G = 1 + 19k/1k = 20
+# Op-amp nodes: OUT, IN+, IN-
+# IN+ connected to input signal
+# IN- connected to feedback divider
+R_G     n_inv   0       1k
+OP1     amp_out in      n_inv   OPAMP
+R_FB1   n_inv   amp_out 19k
+
+# === CLIPPING STAGE ===
+# Series resistor limits current into diodes
+R_CLIP  amp_out clip    1k
+
+# Anti-parallel clipping diodes to ground
+# These hard-clip the signal at approximately ±0.6V
+D1      clip    0       DCLIP
+D2      0       clip    DCLIP
+
+# === OUTPUT ===
+# Output taken from clipping node
+R_LOAD  clip    0       10k
+
+# Model definitions
+# Diode with higher Is for strong clipping effect
+# is=1e-9 gives ~0.5V forward drop at 1mA
+.model DCLIP D (vf=0.5 is=1e-9 n=1.5)
+.model OPAMP OP (gain=100000 rin=1M rout=100)
+
+# Define input and output nodes
+.input  in
+.output clip
