@@ -265,6 +265,69 @@ The `examples/circuits/` directory contains ready-to-use circuit files:
 | `delay_hall_phaser.ped` | Delay → Hall Reverb → Phaser chain |
 | `incircuit_delay.ped` | Demonstrates in-circuit delay placement |
 
+## WASM / Web Usage
+
+Pedaler Core compiles to WebAssembly for browser-based real-time audio processing using the Web Audio API.
+
+### Quick Start
+
+```bash
+# Build WASM package
+wasm-pack build --target web --features wasm --no-default-features
+```
+
+This produces a `pkg/` directory containing:
+- `pedaler_core_bg.wasm` - WebAssembly binary (~196KB)
+- `pedaler_core.js` - ES module loader
+- `pedaler_core.d.ts` - TypeScript definitions
+
+### Basic Usage (TypeScript)
+
+```typescript
+import init, { WasmPedalSim } from 'pedaler_core';
+
+// Initialize WASM (once)
+await init();
+
+// Create simulator
+const circuit = `
+  .input in
+  .output out
+  V_IN in 0 DC 0
+  R1 in out 10k
+  R2 out 0 10k
+`;
+const sim = new WasmPedalSim(circuit, 48000);
+
+// Process audio (in AudioWorklet)
+sim.process_block(inputBuffer, outputBuffer);
+```
+
+### Configuration
+
+```typescript
+// Custom Newton-Raphson settings for performance tuning
+const sim = WasmPedalSim.with_config(
+  circuit,
+  48000,  // sample rate
+  50,     // max iterations
+  1e-3    // tolerance (higher = faster, less precise)
+);
+```
+
+### Full Documentation
+
+For comprehensive integration guides including:
+- Complete TypeScript/AudioWorklet integration
+- Elm integration with ports
+- Vite/Webpack configuration
+- Performance optimization
+- Troubleshooting
+
+See **[docs/wasm_integration.md](docs/wasm_integration.md)**
+
+---
+
 ## Technical Details
 
 ### Simulation Method
@@ -312,4 +375,4 @@ This "analog-style" modulation creates authentic phaser/flanger effects with swe
 
 ## License
 
-MIT License - see LICENSE file for details.
+MIT License - see [LICENSE](./LICENSE) file for details.
