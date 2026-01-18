@@ -129,6 +129,9 @@ ffmpeg -i input.wav -f f32le -ac 1 -ar 96000 - \
 
 Circuits are described in `.ped` files using a SPICE-inspired syntax.
 
+> [!NOTE]
+> **📖 Full Reference:** See [docs/dsl_reference.md](docs/dsl_reference.md) for complete syntax documentation, grammar specification, and more examples.
+
 ### Basic Syntax
 
 - One component per line
@@ -177,6 +180,9 @@ Circuits are described in `.ped` files using a SPICE-inspired syntax.
 - `gain` - Open-loop gain
 - `rin` - Input resistance (Ω)
 - `rout` - Output resistance (Ω)
+
+> [!NOTE]
+> **📖 Detailed Models:** See [docs/components.md](docs/components.md) for component physics, mathematical equations, and MNA stamping details.
 
 ### Digital Effect Parameters
 
@@ -330,6 +336,9 @@ See **[docs/wasm_integration.md](docs/wasm_integration.md)**
 
 ## Technical Details
 
+> [!NOTE]
+> **📖 Deep Dive:** See [docs/architecture.md](docs/architecture.md) for internal architecture, module structure, and implementation details.
+
 ### Simulation Method
 
 Pedaler uses **Modified Nodal Analysis (MNA)** to solve circuit equations at each audio sample:
@@ -372,6 +381,15 @@ LFO-modulated components update their values before each MNA solve:
 4. MNA matrix is re-stamped with new resistance values
 
 This "analog-style" modulation creates authentic phaser/flanger effects with swept filter notches.
+
+## Documentation
+
+| Document | Description |
+|----------|-------------|
+| [docs/dsl_reference.md](docs/dsl_reference.md) | Complete DSL syntax, grammar, and examples |
+| [docs/components.md](docs/components.md) | Component models, physics, and parameters |
+| [docs/architecture.md](docs/architecture.md) | Internal architecture and algorithms |
+| [docs/wasm_integration.md](docs/wasm_integration.md) | WASM/Web integration guide |
 
 ## License
 
