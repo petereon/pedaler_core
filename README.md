@@ -325,7 +325,6 @@ const sim = WasmPedalSim.with_config(
 
 For comprehensive integration guides including:
 - Complete TypeScript/AudioWorklet integration
-- Elm integration with ports
 - Vite/Webpack configuration
 - Performance optimization
 - Troubleshooting
