@@ -7,7 +7,49 @@ use crate::components::{Component, DelayLine, FdnReverb, Lfo, LfoShape, ReverbPa
 use crate::error::Result;
 
 use super::mna::{stamp_linear_components, MnaMatrix};
-use super::NewtonRaphson;
+use super::{NewtonRaphson, DEFAULT_MAX_ITERATIONS, DEFAULT_TOLERANCE};
+
+/// Configuration for the simulator.
+#[derive(Debug, Clone)]
+pub struct SimulatorConfig {
+    /// Maximum Newton-Raphson iterations for nonlinear components.
+    pub max_iterations: usize,
+    /// Convergence tolerance for Newton-Raphson (volts).
+    pub tolerance: f64,
+}
+
+impl Default for SimulatorConfig {
+    fn default() -> Self {
+        Self {
+            max_iterations: DEFAULT_MAX_ITERATIONS,
+            tolerance: DEFAULT_TOLERANCE,
+        }
+    }
+}
+
+impl SimulatorConfig {
+    /// Create a new configuration with default values.
+    pub fn new() -> Self {
+        Self::default()
+    }
+
+    /// Set the maximum Newton-Raphson iterations.
+    pub fn with_max_iterations(mut self, max_iterations: usize) -> Self {
+        self.max_iterations = max_iterations;
+        self
+    }
+
+    /// Set the convergence tolerance (in volts).
+    ///
+    /// Higher tolerance = faster convergence but less accuracy.
+    /// - 1e-6 (default): Very precise, may need more iterations
+    /// - 1e-4: Good balance for most audio applications
+    /// - 1e-3: Fast, suitable for real-time with some accuracy loss
+    pub fn with_tolerance(mut self, tolerance: f64) -> Self {
+        self.tolerance = tolerance;
+        self
+    }
+}
 
 /// An in-circuit digital delay effect.
 struct InCircuitDelay {
@@ -52,11 +94,16 @@ pub struct Simulator {
 }
 
 impl Simulator {
-    /// Create a new simulator for the given circuit.
+    /// Create a new simulator for the given circuit with default configuration.
     pub fn new(circuit: Circuit, sample_rate: f32) -> Self {
+        Self::with_config(circuit, sample_rate, SimulatorConfig::default())
+    }
+
+    /// Create a new simulator for the given circuit with custom configuration.
+    pub fn with_config(circuit: Circuit, sample_rate: f32, config: SimulatorConfig) -> Self {
         let size = circuit.matrix_size();
         let matrix = MnaMatrix::new(size);
-        let newton = NewtonRaphson::new();
+        let newton = NewtonRaphson::with_config(config.max_iterations, config.tolerance);
         let dt = 1.0 / sample_rate as f64;
 
         // Instantiate digital delay effects with their circuit connections

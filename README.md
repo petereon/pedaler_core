@@ -11,6 +11,8 @@ Pedaler simulates analog guitar effect circuits at audio sample rate, allowing y
 - **Nonlinear components**: Diodes, BJTs, Op-Amps
 - **Control elements**: Potentiometers, Switches
 - **Sources**: DC/AC Voltage sources, Current sources
+- **Digital effects**: Delay lines, FDN Reverb (placeable anywhere in circuit)
+- **LFO modulation**: Time-varying components for phaser/flanger effects
 - **Simple DSL** for circuit description (`.ped` files)
 - **CLI tool** for processing audio via stdin/stdout
 - **WASM target** for web audio applications (coming soon)
@@ -62,7 +64,7 @@ pedaler <CIRCUIT_FILE> [OPTIONS]
 | Option | Description | Default |
 |--------|-------------|---------|
 | `-s, --sample-rate <HZ>` | Sample rate in Hz | 48000 |
-| `-h, --help` | Print help information | |
+| `-i, --max-iterations <N>` | Maximum Newton-Raphson iterations for nonlinear components | 50 || `-t, --tolerance <V>` | Convergence tolerance in volts (higher = faster, less precise) | 1e-4 || `-h, --help` | Print help information | |
 | `-V, --version` | Print version information | |
 
 ### Audio Format
@@ -148,6 +150,9 @@ Circuits are described in `.ped` files using a SPICE-inspired syntax.
 | `OP` | Op-Amp | `OP<name> <n+> <n-> <out> <model>` | `OP1 np nm out IDEAL` |
 | `POT` | Potentiometer | `POT<name> <n1> <wiper> <n2> <value> <pos>` | `POT1 in w out 100k 0.5` |
 | `SW` | Switch | `SW<name> <n1> <n2> <state>` | `SW1 in out CLOSED` |
+| `DELAY` | Delay Line | `DELAY <name> <in> <out> <time> [mix=X] [feedback=Y]` | `DELAY d1 in out 300m mix=0.5 feedback=0.4` |
+| `REVERB` | FDN Reverb | `REVERB <name> <in> <out> [params]` | `REVERB r1 in out decay=0.6 size=0.5` |
+| `LFO` | Low Frequency Oscillator | `LFO <name> <rate> <shape>` | `LFO lfo1 0.5 sine` |
 
 ### Directives
 
@@ -173,6 +178,37 @@ Circuits are described in `.ped` files using a SPICE-inspired syntax.
 - `rin` - Input resistance (Ω)
 - `rout` - Output resistance (Ω)
 
+### Digital Effect Parameters
+
+**Delay (DELAY)**:
+- `time` - Delay time (e.g., `300m` = 300ms, `0.5` = 500ms)
+- `mix` - Dry/wet mix, 0.0-1.0 (default: 0.5)
+- `feedback` - Feedback amount, 0.0-1.0 (default: 0.0)
+
+**Reverb (REVERB)**:
+- `decay` - Reverb decay, 0.0-1.0 (default: 0.5)
+- `size` - Room size, 0.0-1.0 (default: 0.5)
+- `damping` - High-frequency damping, 0.0-1.0 (default: 0.3)
+- `mix` - Dry/wet mix, 0.0-1.0 (default: 0.5)
+- `predelay` - Initial delay before reverb (default: 0)
+
+**LFO (LFO)**:
+- `rate` - Oscillation frequency in Hz
+- `shape` - Waveform: `sine`, `triangle`, `sawtooth`, `square`
+
+### Modulated Components
+
+Resistors can be modulated by an LFO for phaser/flanger effects:
+
+```text
+LFO LFO1 0.5 sine
+R_MOD n1 n2 10k LFO1 depth=0.8 range=2.0
+```
+
+- `depth` - Modulation depth, 0.0-1.0
+- `range` - Modulation range multiplier
+- Formula: `R_effective = R_base * (1 + depth * range * lfo_value)`
+
 ### Example Circuit
 
 ```text
@@ -191,13 +227,43 @@ R_OUT   n1      out     1k
 
 ## Example Circuits
 
-The `examples/` directory contains ready-to-use circuit files:
+The `examples/circuits/` directory contains ready-to-use circuit files:
 
+### Basic Circuits
 | File | Description |
 |------|-------------|
 | `rc_lowpass.ped` | First-order RC low-pass filter (fc ≈ 1.59 kHz) |
+| `treble_boost.ped` | Simple treble boost circuit |
+
+### Distortion/Overdrive
+| File | Description |
+|------|-------------|
 | `diode_clipper.ped` | Symmetrical diode hard clipper |
 | `opamp_overdrive.ped` | Tube Screamer-style op-amp overdrive |
+| `distortion.ped` | Heavy distortion circuit |
+| `fuzz.ped` | Fuzz pedal circuit |
+| `lofi.ped` | Lo-fi distortion effect |
+
+### Time-Based Effects
+| File | Description |
+|------|-------------|
+| `delay.ped` | Simple delay (300ms echo) |
+| `slapback.ped` | Short slapback delay |
+| `reverb.ped` | Basic FDN reverb |
+| `hall_reverb.ped` | Large hall reverb |
+| `distortion_reverb.ped` | Distortion into reverb chain |
+
+### Modulation Effects
+| File | Description |
+|------|-------------|
+| `phaser.ped` | 4-stage all-pass phaser with LFO |
+| `flanger.ped` | 6-stage flanger with feedback |
+
+### Effect Chains
+| File | Description |
+|------|-------------|
+| `delay_hall_phaser.ped` | Delay → Hall Reverb → Phaser chain |
+| `incircuit_delay.ped` | Demonstrates in-circuit delay placement |
 
 ## Technical Details
 
@@ -219,8 +285,30 @@ Reactive elements (C, L) use **trapezoidal integration** for accurate frequency 
 ### Nonlinear Solving
 
 - **Convergence tolerance**: 1e-6
-- **Maximum iterations**: 50
+- **Maximum iterations**: Configurable (Default: 50)
 - **Voltage limiting**: Prevents numerical overflow in exp() functions
+
+### Digital Effects Integration
+
+Digital effects (DELAY, REVERB) are integrated directly into the MNA matrix as voltage sources:
+
+1. Effects read their input node voltage from the previous sample's solution
+2. Process the signal through delay buffer / FDN reverb
+3. Stamp as voltage source driving the output node
+4. MNA solve includes the effect as part of the circuit
+
+This allows digital effects to be placed **anywhere** in the circuit topology, not just as post-processing. There is an inherent 1-sample latency (similar to capacitor companion models).
+
+### LFO Modulation
+
+LFO-modulated components update their values before each MNA solve:
+
+1. All LFOs advance their phase by `rate / sample_rate`
+2. LFO output value computed based on waveform shape (0-1 range)
+3. Modulated resistors update: `R_eff = R_base * (1 + depth * range * lfo_value)`
+4. MNA matrix is re-stamped with new resistance values
+
+This "analog-style" modulation creates authentic phaser/flanger effects with swept filter notches.
 
 ## License
 

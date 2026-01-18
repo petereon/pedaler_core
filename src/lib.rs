@@ -59,7 +59,7 @@ pub mod audio;
 // Re-export main types for convenience
 pub use circuit::Circuit;
 pub use error::{PedalerError, Result};
-pub use solver::Simulator;
+pub use solver::{Simulator, SimulatorConfig};
 
 // WASM bindings
 #[cfg(feature = "wasm")]

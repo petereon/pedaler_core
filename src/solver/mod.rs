@@ -30,13 +30,13 @@ mod simulator;
 
 pub use mna::MnaMatrix;
 pub use newton::NewtonRaphson;
-pub use simulator::Simulator;
+pub use simulator::{Simulator, SimulatorConfig};
 
-/// Convergence tolerance for Newton-Raphson iteration.
-pub const CONVERGENCE_TOLERANCE: f64 = 1e-6;
+/// Default convergence tolerance for Newton-Raphson iteration.
+pub const DEFAULT_TOLERANCE: f64 = 1e-4;
 
-/// Maximum Newton-Raphson iterations per time step.
-pub const MAX_ITERATIONS: usize = 50;
+/// Default maximum Newton-Raphson iterations per time step.
+pub const DEFAULT_MAX_ITERATIONS: usize = 50;
 
 /// Minimum conductance to prevent singular matrix.
 pub const MIN_CONDUCTANCE: f64 = 1e-12;

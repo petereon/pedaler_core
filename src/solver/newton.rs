@@ -4,7 +4,7 @@ use crate::circuit::Circuit;
 use crate::components::Component;
 use crate::error::{PedalerError, Result};
 use super::mna::MnaMatrix;
-use super::{CONVERGENCE_TOLERANCE, MAX_ITERATIONS};
+use super::{DEFAULT_TOLERANCE, DEFAULT_MAX_ITERATIONS};
 
 /// Newton-Raphson solver for nonlinear circuits.
 pub struct NewtonRaphson {
@@ -23,11 +23,29 @@ impl Default for NewtonRaphson {
 }
 
 impl NewtonRaphson {
-    /// Create a new Newton-Raphson solver.
+    /// Create a new Newton-Raphson solver with default settings.
     pub fn new() -> Self {
         Self {
-            max_iterations: MAX_ITERATIONS,
-            tolerance: CONVERGENCE_TOLERANCE,
+            max_iterations: DEFAULT_MAX_ITERATIONS,
+            tolerance: DEFAULT_TOLERANCE,
+            x_prev: Vec::new(),
+        }
+    }
+
+    /// Create a new Newton-Raphson solver with custom max iterations.
+    pub fn with_max_iterations(max_iterations: usize) -> Self {
+        Self {
+            max_iterations,
+            tolerance: DEFAULT_TOLERANCE,
+            x_prev: Vec::new(),
+        }
+    }
+
+    /// Create a new Newton-Raphson solver with custom settings.
+    pub fn with_config(max_iterations: usize, tolerance: f64) -> Self {
+        Self {
+            max_iterations,
+            tolerance,
             x_prev: Vec::new(),
         }
     }
@@ -68,26 +86,42 @@ impl NewtonRaphson {
             matrix.factor()?;
             matrix.solve()?;
 
-            // Check convergence
+            // Check convergence (compare new solution with previous)
             let mut max_diff = 0.0f64;
             for i in 0..matrix.size {
                 let diff = (matrix.x[i] - self.x_prev[i]).abs();
                 max_diff = max_diff.max(diff);
             }
 
+            // Save current solution for next iteration (before convergence return)
+            self.x_prev.copy_from_slice(&matrix.x);
+
             if max_diff < self.tolerance {
                 // Update operating points for next time step
                 self.update_operating_points(circuit, matrix);
                 return Ok(iter + 1);
             }
+        }
 
-            // Save current solution for next iteration
-            self.x_prev.copy_from_slice(&matrix.x);
+        // Calculate final residual for error reporting
+        // Do one more solve to get the actual residual
+        matrix.clear();
+        super::mna::stamp_linear_components(circuit, matrix, dt);
+        self.stamp_nonlinear_components(circuit, matrix)?;
+        matrix.factor()?;
+        matrix.solve()?;
+
+        let final_residual = self.residual(matrix);
+
+        // Check if this last iteration converged
+        if final_residual < self.tolerance {
+            self.update_operating_points(circuit, matrix);
+            return Ok(self.max_iterations);
         }
 
         Err(PedalerError::convergence_failure(
             self.max_iterations,
-            self.residual(matrix),
+            final_residual,
         ))
     }
 
