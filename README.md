@@ -1,4 +1,4 @@
-# Pedaler Core
+# Pedaler
 
 A real-time circuit simulator for guitar pedals written in Rust.
 
