@@ -321,7 +321,7 @@ MNA formulates circuit equations as a linear system $Ax = z$ where:
 
 For a circuit with $n$ nodes (excluding ground) and $m$ voltage sources:
 
-$$\begin{bmatrix} G & B \\ C & D \end{bmatrix} \begin{bmatrix} v \\ i \end{bmatrix} = \begin{bmatrix} i_s \\ v_s \end{bmatrix}$$
+$$\begin{bmatrix} G & B \\\\ C & D \end{bmatrix} \begin{bmatrix} v \\\\ i \end{bmatrix} = \begin{bmatrix} i_s \\\\ v_s \end{bmatrix}$$
 
 Where:
 - $G$ ($n \times n$): Conductance matrix
@@ -655,31 +655,31 @@ impl WasmPedalSim {
 ```
 ┌─────────────────────────────────────────────────────────┐
 │                    Main Thread                          │
-│  ┌──────────────┐      ┌────────────────────────┐      │
-│  │   JS/TS App  │─────►│  AudioWorkletNode      │      │
-│  └──────────────┘      │  (port.postMessage)    │      │
-│                        └────────────────────────┘      │
+│  ┌──────────────┐      ┌────────────────────────┐       │
+│  │   JS/TS App  │─────►│  AudioWorkletNode      │       │
+│  └──────────────┘      │  (port.postMessage)    │       │
+│                        └────────────────────────┘       │
 └─────────────────────────────────────────────────────────┘
                               │
                               ▼
 ┌─────────────────────────────────────────────────────────┐
 │                 AudioWorklet Thread                     │
-│  ┌────────────────────────────────────────────────┐    │
-│  │           AudioWorkletProcessor                │    │
-│  │  ┌────────────────────────────────────────┐   │    │
-│  │  │         WASM Module                    │   │    │
-│  │  │  ┌─────────────────────────────────┐  │   │    │
-│  │  │  │        WasmPedalSim             │  │   │    │
-│  │  │  │  - Simulator                    │  │   │    │
-│  │  │  │  - MNA Matrix                   │  │   │    │
-│  │  │  │  - Component State              │  │   │    │
-│  │  │  └─────────────────────────────────┘  │   │    │
-│  │  └────────────────────────────────────────┘   │    │
-│  │                                               │    │
-│  │  process(inputs, outputs) {                   │    │
-│  │    this.sim.process_block(input, output);     │    │
-│  │  }                                            │    │
-│  └────────────────────────────────────────────────┘    │
+│  ┌────────────────────────────────────────────────┐     │
+│  │           AudioWorkletProcessor                │     │
+│  │  ┌────────────────────────────────────────┐    │     │
+│  │  │         WASM Module                    │    │     │
+│  │  │  ┌─────────────────────────────────┐   │    │     │
+│  │  │  │        WasmPedalSim             │   │    │     │
+│  │  │  │  - Simulator                    │   │    │     │
+│  │  │  │  - MNA Matrix                   │   │    │     │
+│  │  │  │  - Component State              │   │    │     │
+│  │  │  └─────────────────────────────────┘   │    │     │
+│  │  └────────────────────────────────────────┘    │     │
+│  │                                                │     │
+│  │  process(inputs, outputs) {                    │     │
+│  │    this.sim.process_block(input, output);      │     │
+│  │  }                                             │     │
+│  └────────────────────────────────────────────────┘     │
 └─────────────────────────────────────────────────────────┘
 ```
 
