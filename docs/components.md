@@ -253,6 +253,7 @@ D1 anode cathode 1N4148
 The simplified Ebers-Moll model treats the BJT as two diodes with a current-controlled current source.
 
 **NPN Equations:**
+
 $$I_C = I_S \left( e^{\frac{V_{BE}}{nV_T}} - e^{\frac{V_{BC}}{nV_T}} \right) - \frac{I_S}{\beta_R} \left( e^{\frac{V_{BC}}{nV_T}} - 1 \right)$$
 
 $$I_B = \frac{I_S}{\beta_F} \left( e^{\frac{V_{BE}}{nV_T}} - 1 \right) + \frac{I_S}{\beta_R} \left( e^{\frac{V_{BC}}{nV_T}} - 1 \right)$$
@@ -433,7 +434,8 @@ Feedback Delay Network with 4 delay lines and Hadamard mixing matrix:
 5. Fed back with decay coefficient
 
 **Hadamard Matrix (4x4):**
-$$H = \frac{1}{2}\begin{bmatrix} 1 & 1 & 1 & 1 \\ 1 & -1 & 1 & -1 \\ 1 & 1 & -1 & -1 \\ 1 & -1 & -1 & 1 \end{bmatrix}$$
+
+$$H = \frac{1}{2}\begin{bmatrix} 1 & 1 & 1 & 1 \\\\ 1 & -1 & 1 & -1 \\\\ 1 & 1 & -1 & -1 \\\\ 1 & -1 & -1 & 1 \end{bmatrix}$$
 
 **Delay Line Lengths (at 48kHz):**
 Base delays scaled by `size` parameter:
