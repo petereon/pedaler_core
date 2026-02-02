@@ -309,9 +309,11 @@ pub fn stamp_linear_components(circuit: &Circuit, matrix: &mut MnaMatrix, dt: f6
             }
 
             Component::OpAmp(op) => {
-                let n_out = circuit.node_index(op.output());
                 let n_pos = circuit.node_index(op.input_pos());
                 let n_neg = circuit.node_index(op.input_neg());
+                let n_out = circuit.node_index(op.output());
+                let n_vcc = circuit.node_index(op.rail_pos());
+                let n_vneg = circuit.node_index(op.rail_neg());
 
                 // Model op-amp as VCCS + output resistance
                 // This is more numerically stable than VCVS for high gains
@@ -338,6 +340,11 @@ pub fn stamp_linear_components(circuit: &Circuit, matrix: &mut MnaMatrix, dt: f6
                 // This prevents floating inputs
                 let g_in = op.input_conductance();
                 matrix.stamp_conductance(n_pos, n_neg, g_in);
+
+                // Stamp quiescent current from VCC to VNEG (typically 1-5mA)
+                // This ensures power rails are active in the circuit
+                let i_q = 0.002; // 2mA quiescent current
+                matrix.stamp_current_source(n_vcc, n_vneg, i_q);
             }
 
             Component::Potentiometer(p) => {

@@ -45,6 +45,10 @@ struct Args {
     /// Higher = faster but less accurate. Default is 1e-4.
     #[arg(short = 't', long, default_value_t = DEFAULT_TOLERANCE)]
     tolerance: f64,
+
+    /// Input gain multiplier (e.g. 2.0 = double input voltage)
+    #[arg(short = 'g', long, default_value_t = 1.0)]
+    input_gain: f32,
 }
 
 fn main() -> Result<()> {
@@ -62,7 +66,8 @@ fn main() -> Result<()> {
     // Create simulator with configuration
     let config = SimulatorConfig::new()
         .with_max_iterations(args.max_iterations)
-        .with_tolerance(args.tolerance);
+        .with_tolerance(args.tolerance)
+        .with_input_gain(args.input_gain);
     let mut simulator = Simulator::with_config(circuit, args.sample_rate, config);
 
     // Process audio

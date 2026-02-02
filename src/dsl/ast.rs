@@ -121,7 +121,7 @@ impl ComponentType {
             Self::Diode => 2,
             Self::Bjt => 3,        // collector, base, emitter
             Self::VoltageSource | Self::CurrentSource => 2,
-            Self::OpAmp => 3,      // out, in+, in-
+            Self::OpAmp => 5,      // in+, in-, out, vcc, vneg
             Self::Potentiometer => 3, // n1, wiper, n2
             Self::Switch => 2,
             Self::Delay => 2,      // in, out
@@ -168,15 +168,4 @@ impl ModelType {
             _ => None,
         }
     }
-}
-
-/// Voltage source type.
-#[derive(Debug, Clone, Copy, PartialEq)]
-pub enum SourceType {
-    /// DC voltage/current
-    Dc(f64),
-    /// AC source (will be driven by audio input)
-    Ac(f64),
-    /// Combined DC bias and AC
-    DcAc { dc: f64, ac: f64 },
 }

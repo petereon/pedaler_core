@@ -243,7 +243,7 @@ impl Circuit {
             components.push(component);
         }
 
-        Ok(Circuit {
+        let mut circuit = Circuit {
             components,
             node_map,
             node_names,
@@ -255,7 +255,65 @@ impl Circuit {
             delay_defs,
             reverb_defs,
             lfo_defs,
-        })
+        };
+
+        // Resolve op-amp rail voltages from DC sources
+        circuit.resolve_opamp_rails()?;
+
+        Ok(circuit)
+    }
+
+    /// Resolve and set op-amp rail voltages from DC power supply sources.
+    fn resolve_opamp_rails(&mut self) -> Result<()> {
+        // Collect op-amp indices and their rail nodes
+        let mut opamp_rails: Vec<(usize, NodeId, NodeId)> = Vec::new();
+
+        for (idx, comp) in self.components.iter().enumerate() {
+            if let Component::OpAmp(op) = comp {
+                opamp_rails.push((idx, op.rail_pos(), op.rail_neg()));
+            }
+        }
+
+        // For each op-amp, find the DC voltages at its rails
+        for (opamp_idx, vcc_node, vneg_node) in opamp_rails {
+            let mut v_pos = None;
+            let mut v_neg = None;
+
+            // Find voltage sources connected to these nodes
+            for comp in &self.components {
+                if let Component::VoltageSource(vs) = comp {
+                    // Check if connected to VCC
+                    if (vs.nodes[0] == vcc_node && vs.nodes[1].is_ground())
+                        || (vs.nodes[1] == vcc_node && vs.nodes[0].is_ground())
+                    {
+                        v_pos = Some(vs.dc_value);
+                    }
+
+                    // Check if connected to VNEG
+                    if (vs.nodes[0] == vneg_node && vs.nodes[1].is_ground())
+                        || (vs.nodes[1] == vneg_node && vs.nodes[0].is_ground())
+                    {
+                        v_neg = Some(vs.dc_value);
+                    }
+                }
+            }
+
+            // VNEG connected to ground is 0V
+            if vneg_node.is_ground() {
+                v_neg = Some(0.0);
+            }
+
+            // Set the rail voltages in the op-amp
+            if let Some(v_p) = v_pos {
+                let v_n = v_neg.unwrap_or(0.0);
+
+                if let Component::OpAmp(ref mut op) = self.components[opamp_idx] {
+                    op.set_rail_voltages(v_p, v_n);
+                }
+            }
+        }
+
+        Ok(())
     }
 
     /// Get the total size of the MNA solution vector.

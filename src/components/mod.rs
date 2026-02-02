@@ -134,14 +134,14 @@ impl Component {
                 let value = def.value.unwrap_or(0.0);
                 let branch = BranchId(*branch_counter);
                 *branch_counter += 1;
-                let is_ac = def.params.contains_key("ac");
+                let is_audio_input = def.params.contains_key("in");
                 Ok(Component::VoltageSource(VoltageSource::new(
                     id,
                     def.name.clone(),
                     [nodes[0], nodes[1]],
                     value,
                     branch,
-                    is_ac,
+                    is_audio_input,
                 )))
             }
 
@@ -196,7 +196,7 @@ impl Component {
                 Ok(Component::OpAmp(OpAmp::new(
                     id,
                     def.name.clone(),
-                    [nodes[0], nodes[1], nodes[2]], // out, in+, in-
+                    [nodes[0], nodes[1], nodes[2], nodes[3], nodes[4]], // in+, in-, out, vcc, vneg
                     params,
                     branch,
                 )))

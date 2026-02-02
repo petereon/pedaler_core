@@ -16,6 +16,8 @@ pub struct SimulatorConfig {
     pub max_iterations: usize,
     /// Convergence tolerance for Newton-Raphson (volts).
     pub tolerance: f64,
+    /// Input gain multiplier (applied to audio input voltage).
+    pub input_gain: f32,
 }
 
 impl Default for SimulatorConfig {
@@ -23,6 +25,7 @@ impl Default for SimulatorConfig {
         Self {
             max_iterations: DEFAULT_MAX_ITERATIONS,
             tolerance: DEFAULT_TOLERANCE,
+            input_gain: 1.0,
         }
     }
 }
@@ -47,6 +50,15 @@ impl SimulatorConfig {
     /// - 1e-3: Fast, suitable for real-time with some accuracy loss
     pub fn with_tolerance(mut self, tolerance: f64) -> Self {
         self.tolerance = tolerance;
+        self
+    }
+
+    /// Set the input gain multiplier.
+    ///
+    /// Multiplies the input audio voltage by this factor.
+    /// Use this to boost quiet input signals.
+    pub fn with_input_gain(mut self, input_gain: f32) -> Self {
+        self.input_gain = input_gain;
         self
     }
 }
@@ -83,6 +95,8 @@ pub struct Simulator {
     sample_rate: f32,
     /// Time step (1/sample_rate)
     dt: f64,
+    /// Input gain multiplier
+    input_gain: f32,
     /// In-circuit digital delay effects
     delays: Vec<InCircuitDelay>,
     /// In-circuit digital reverb effects
@@ -173,6 +187,7 @@ impl Simulator {
             newton,
             sample_rate,
             dt,
+            input_gain: config.input_gain,
             delays,
             reverbs,
             lfos,
@@ -187,10 +202,11 @@ impl Simulator {
 
     /// Set the input voltage (audio sample).
     pub fn set_input(&mut self, voltage: f32) {
-        // Find the audio input voltage source and set its value
+        // Apply input gain and find the audio input voltage source
+        let scaled_voltage = voltage * self.input_gain;
         if let Some(idx) = self.circuit.input_source_idx {
             if let Component::VoltageSource(ref mut vs) = self.circuit.components[idx] {
-                vs.set_value(voltage as f64);
+                vs.set_value(scaled_voltage as f64);
             }
         }
     }

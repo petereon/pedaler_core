@@ -267,32 +267,38 @@ impl<'a> Parser<'a> {
                         continue;
                     }
 
-                    // Check if this looks like a value with unit suffix
-                    if nodes.len() >= expected_nodes {
+                    // Check for special keywords (case-sensitive to avoid conflicts)
+                    let text_upper = text.to_uppercase();
+                    if text_upper == "DC" && text == "DC" {
+                        // DC source type keyword - next token should be value
+                        params.insert("dc".to_string(), 1.0);
+                        if self.current.kind == TokenKind::Number
+                            || self.current.kind == TokenKind::Identifier
+                        {
+                            let val_text = self.current.text.clone();
+                            self.advance()?;
+                            if let Some(v) = parse_value(&val_text) {
+                                value = Some(v);
+                            }
+                        }
+                    } else if (text == "IN" || text == "AUDIO") && nodes.len() >= expected_nodes {
+                        // IN/AUDIO source type - audio input (no value needed)
+                        // Only treat as keyword if we've collected all nodes
+                        params.insert("in".to_string(), 1.0);
+                        // No value follows IN/AUDIO - voltage will be set by simulator
+                    } else if text == "0" || text_upper == "GND" {
+                        // Ground node
+                        nodes.push("0".to_string());
+                    } else if nodes.len() < expected_nodes {
+                        // Still collecting nodes
+                        nodes.push(text);
+                    } else {
+                        // We have all nodes, this must be a value or model reference
                         if let Some(v) = parse_value(&text) {
                             value = Some(v);
                         } else {
                             // Could be a model reference
                             model_ref = Some(text);
-                        }
-                    } else {
-                        // Check for special keywords first
-                        if text == "DC" || text == "AC" {
-                            // Source type keyword - next token should be value
-                            params.insert(text.to_lowercase(), 1.0);
-                            if self.current.kind == TokenKind::Number
-                                || self.current.kind == TokenKind::Identifier
-                            {
-                                let val_text = self.current.text.clone();
-                                self.advance()?;
-                                if let Some(v) = parse_value(&val_text) {
-                                    value = Some(v);
-                                }
-                            }
-                        } else if text == "0" || text.to_uppercase() == "GND" {
-                            nodes.push("0".to_string());
-                        } else {
-                            nodes.push(text);
                         }
                     }
                 }
@@ -300,9 +306,13 @@ impl<'a> Parser<'a> {
                     let text = self.current.text.clone();
                     self.advance()?;
 
-                    if text == "0" && nodes.len() < expected_nodes {
+                    // Check if this is ground node (0)
+                    if (text == "0" || text == "0.0") && nodes.len() < expected_nodes {
                         // Ground node
                         nodes.push("0".to_string());
+                    } else if nodes.len() < expected_nodes {
+                        // Treat number as node name (unusual but possible)
+                        nodes.push(text.clone());
                     } else if let Some(v) = parse_value(&text) {
                         if value.is_none() {
                             value = Some(v);
@@ -379,5 +389,18 @@ mod tests {
         let input = "# This is a comment\nR1 in out 1k ; inline comment style\n";
         let ast = super::super::parse(input).unwrap();
         assert_eq!(ast.components.len(), 1);
+    }
+
+    #[test]
+    fn test_parse_in_source() {
+        let input = "V_IN in 0 IN";
+        let ast = super::super::parse(input).unwrap();
+        assert_eq!(ast.components.len(), 1);
+        let comp = &ast.components[0];
+        assert_eq!(comp.component_type, ComponentType::VoltageSource);
+        assert_eq!(comp.name, "V_IN");
+        assert_eq!(comp.nodes, vec!["in", "0"]);
+        assert!(comp.params.contains_key("in"));
+        assert_eq!(comp.value, None);
     }
 }

@@ -104,11 +104,15 @@ impl OpAmpParams {
 pub struct OpAmp {
     pub id: ComponentId,
     pub name: String,
-    pub nodes: [NodeId; 3], // [output, non-inverting (+), inverting (-)]
+    pub nodes: [NodeId; 5], // [non-inverting (+), inverting (-), output, vcc, vneg]
     pub params: OpAmpParams,
     pub branch: BranchId,
     /// Current output voltage (for slew rate limiting)
     pub v_out: f64,
+    /// Actual VCC rail voltage (constant, from DC source)
+    pub v_rail_pos_actual: f64,
+    /// Actual VNEG rail voltage (constant, from DC source or ground)
+    pub v_rail_neg_actual: f64,
 }
 
 impl OpAmp {
@@ -116,7 +120,7 @@ impl OpAmp {
     pub fn new(
         id: ComponentId,
         name: String,
-        nodes: [NodeId; 3],
+        nodes: [NodeId; 5],
         params: OpAmpParams,
         branch: BranchId,
     ) -> Self {
@@ -127,22 +131,40 @@ impl OpAmp {
             params,
             branch,
             v_out: 0.0,
+            v_rail_pos_actual: 15.0, // Will be set during circuit construction
+            v_rail_neg_actual: -15.0,
         }
+    }
+
+    /// Set the actual rail voltages from DC power supplies.
+    pub fn set_rail_voltages(&mut self, v_pos: f64, v_neg: f64) {
+        self.v_rail_pos_actual = v_pos;
+        self.v_rail_neg_actual = v_neg;
+    }
+
+    /// Get the non-inverting input node (+).
+    pub fn input_pos(&self) -> NodeId {
+        self.nodes[0]
+    }
+
+    /// Get the inverting input node (-).
+    pub fn input_neg(&self) -> NodeId {
+        self.nodes[1]
     }
 
     /// Get the output node.
     pub fn output(&self) -> NodeId {
-        self.nodes[0]
-    }
-
-    /// Get the non-inverting input node.
-    pub fn input_pos(&self) -> NodeId {
-        self.nodes[1]
-    }
-
-    /// Get the inverting input node.
-    pub fn input_neg(&self) -> NodeId {
         self.nodes[2]
+    }
+
+    /// Get the positive supply rail (VCC) node.
+    pub fn rail_pos(&self) -> NodeId {
+        self.nodes[3]
+    }
+
+    /// Get the negative supply rail (VNEG/GND) node.
+    pub fn rail_neg(&self) -> NodeId {
+        self.nodes[4]
     }
 
     /// Calculate the ideal output voltage (before rail limiting).
