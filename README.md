@@ -1,5 +1,8 @@
 # Pedaler
 
+> [!WARNING]
+> The DSL used to define circuits is currently being reworked and the docs do not align with the actual implementation.
+
 A real-time circuit simulator for guitar pedals written in Rust.
 
 Pedaler simulates analog guitar effect circuits at audio sample rate, allowing you to process audio through virtual pedal circuits defined in a simple text-based DSL.
